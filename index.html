@@ -112,22 +112,27 @@
         }
 
         // 自動スクロールを実行する関数
+        // 自動スクロールを実行する関数
         function autoScroll() {
+            // デバッグ用ログ: これらの値がどうなっているか確認
+            // console.log('autoScroll called. currentScroll:', galleryContainer.scrollTop, 
+            //               'maxScroll:', galleryContainer.scrollHeight - galleryContainer.clientHeight);
 
-            console.log('autoScroll called', galleryContainer.scrollTop, galleryContainer.scrollHeight, galleryContainer.clientHeight); 
-            
-            // スクロール可能な最大量
             const maxScroll = galleryContainer.scrollHeight - galleryContainer.clientHeight;
-
-            // 現在のスクロール位置
             const currentScroll = galleryContainer.scrollTop;
 
-            if (currentScroll < maxScroll) {
-                // 下にスクロール
-                galleryContainer.scrollTop += SCROLL_SPEED;
+            // スクロール可能なコンテンツがない場合は何もしない
+            if (maxScroll <= 0) {
+                return;
+            }
+
+            // 最下部に十分に近づいた、または到達した場合
+            // currentScroll >= maxScroll とすることで、わずかな誤差を許容
+            // または currentScroll + SCROLL_SPEED >= maxScroll で、次のスクロールで超える場合を考慮
+            if (currentScroll >= maxScroll - SCROLL_SPEED / 2) { // 少し余裕を持たせて最下部を判定
+                galleryContainer.scrollTop = 0; // 一番上に戻る
             } else {
-                // 最下部に到達したら、一番上に戻る
-                galleryContainer.scrollTop = 0;
+                galleryContainer.scrollTop += SCROLL_SPEED; // 下にスクロール
             }
         }
 
