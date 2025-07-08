@@ -20,6 +20,10 @@
             gap: 20px; /* 画像間の隙間 */
             max-width: 1200px; /* ギャラリーの最大幅 */
             margin: 0 auto; /* 中央寄せ */
+            max-height: calc(100vh - 100px); /* 画面の高さからヘッダーなどの分を引いた高さ */
+            overflow-y: auto; /* 縦方向のスクロールバーを自動で表示 */
+            scroll-behavior: smooth; /* スムーズスクロール */
+            
         }
         .gallery-item {
             background-color: white;
