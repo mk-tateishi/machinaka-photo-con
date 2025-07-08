@@ -112,25 +112,28 @@
         }
 
         // 自動スクロールを実行する関数
-        // 自動スクロールを実行する関数
         function autoScroll() {
-            // デバッグ用ログ: これらの値がどうなっているか確認
-            // console.log('autoScroll called. currentScroll:', galleryContainer.scrollTop, 
-            //               'maxScroll:', galleryContainer.scrollHeight - galleryContainer.clientHeight);
-
-            const maxScroll = galleryContainer.scrollHeight - galleryContainer.clientHeight;
-            const currentScroll = galleryContainer.scrollTop;
+            // スクロール可能な最大量
+            // galleryContainer.scrollHeight - galleryContainer.clientHeight で計算される値が浮動小数点数になることがあるため、
+            // Math.round() で丸めることで、厳密な比較での誤差を吸収します。
+            const maxScroll = Math.round(galleryContainer.scrollHeight - galleryContainer.clientHeight);
+            const currentScroll = Math.round(galleryContainer.scrollTop); // 現在のスクロール位置も丸める
 
             // スクロール可能なコンテンツがない場合は何もしない
             if (maxScroll <= 0) {
+                // デバッグ用: スクロールが不要な場合はログで知らせる
+                // console.log("No scroll needed (maxScroll <= 0)");
                 return;
             }
 
-            // 最下部に十分に近づいた、または到達した場合
-            // currentScroll >= maxScroll とすることで、わずかな誤差を許容
-            // または currentScroll + SCROLL_SPEED >= maxScroll で、次のスクロールで超える場合を考慮
-            if (currentScroll >= maxScroll - SCROLL_SPEED / 2) { // 少し余裕を持たせて最下部を判定
+            // デバッグ用: currentScrollとmaxScrollの値を確認
+            // console.log(`currentScroll: ${currentScroll}, maxScroll: ${maxScroll}`);
+
+            // 最下部に到達した、または超えたと判断した場合に一番上に戻る
+            // SCROLL_SPEEDの半分を引く代わりに、currentScrollがmaxScroll以上になったらリセットする
+            if (currentScroll >= maxScroll) {
                 galleryContainer.scrollTop = 0; // 一番上に戻る
+                // console.log("Scrolled to top"); // デバッグ用
             } else {
                 galleryContainer.scrollTop += SCROLL_SPEED; // 下にスクロール
             }
