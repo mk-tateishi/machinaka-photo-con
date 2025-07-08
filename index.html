@@ -3,106 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リアルタイムフォトスライドショー</title>
+    <title>リアルタイムフォトギャラリー</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: black; }
-        #slideshow-container {
-            width: 100vw;
-            height: 100vh;
+        body { 
+            margin: 0; 
+            background-color: #f0f0f0; /* 背景色を少し明るく */
+            font-family: sans-serif;
+            padding: 20px; /* 全体に余白 */
+            box-sizing: border-box; /* paddingで幅が広がらないように */
+        }
+        #gallery-container {
+            display: grid;
+            /* グリッドレイアウトで画像を配置 */
+            /* 画面幅に合わせて画像の列数を調整 */
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 20px; /* 画像間の隙間 */
+            max-width: 1200px; /* ギャラリーの最大幅 */
+            margin: 0 auto; /* 中央寄せ */
+        }
+        .gallery-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden; /* 画像がはみ出さないように */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 200px; /* アイテムの最小高さ */
         }
-        .slide-image {
+        .gallery-item img {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain; /* 画像がはみ出さないように調整 */
-            display: none; /* 初期は非表示 */
+            object-fit: contain; /* 画像全体を表示 */
+            display: block; /* 余分なスペースをなくす */
         }
-        .slide-image.active {
-            display: block; /* アクティブな画像のみ表示 */
+        .loading-message, .error-message {
+            text-align: center;
+            color: #555;
+            padding: 50px;
         }
+        /* スライドショー関連のスタイルは不要になるので削除またはコメントアウト */
+        /* #slideshow-container, .slide-image, .slide-image.active など */
     </style>
 </head>
 <body>
-    <div id="slideshow-container"></div>
+    <h1 style="text-align: center; color: #333;">イベントフォトギャラリー</h1>
+    <div id="gallery-container">
+        <p class="loading-message">写真を読み込み中...</p>
+    </div>
 
     <script>
         // ここにGASのウェブアプリURLを貼り付ける
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwJ1QQdKWiG8kZq0qiQB5bJwPMuJdnD3zhst2L4mNOy-brFntAQ1ezP5bANKPbl2FDv/exec'; 
-        let images = [];
-        let currentIndex = 0;
-        const slideshowContainer = document.getElementById('slideshow-container');
-        const SLIDE_DISPLAY_TIME = 5000; // 各スライドの表示時間（ミリ秒）
-        const REFRESH_INTERVAL = 10000; // 写真リストの再取得間隔（ミリ秒）
+        const GAS_WEB_APP_URL = 'ここにコピーしたGASのウェブアプリURLを入力'; 
+        const galleryContainer = document.getElementById('gallery-container');
+        const REFRESH_INTERVAL = 15000; // 写真リストの再取得間隔（ミリ秒）- スライドショーより少し長めでも可
 
         async function fetchImages() {
             try {
                 const response = await fetch(GAS_WEB_APP_URL);
-                const newImages = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const imageUrls = await response.json();
+                
+                // 既存の画像を全てクリア
+                galleryContainer.innerHTML = ''; 
 
-                // 新しい画像と現在の画像を比較し、追加されたものだけを扱う
-                // シンプル化のため、今回は常に新しいリストで上書き
-                images = newImages;
+                if (imageUrls.length > 0) {
+                    imageUrls.forEach(url => {
+                        const galleryItem = document.createElement('div');
+                        galleryItem.classList.add('gallery-item');
 
-                if (images.length > 0 && slideshowContainer.children.length === 0) {
-                    // 初回ロード時
-                    loadAndDisplayImage(currentIndex);
-                } else if (images.length > slideshowContainer.children.length) {
-                    // 新しい画像が追加された場合（シンプルな対応）
-                    // 一度全ての画像を再生成する方が確実だが、ここではシンプルに最新の画像を表示
-                    // 複雑な状態管理を避けるため、既存の画像を全て削除して再生成する
-                    while (slideshowContainer.firstChild) {
-                        slideshowContainer.removeChild(slideshowContainer.firstChild);
-                    }
-                    currentIndex = 0; // 最初から表示し直し
-                    loadAndDisplayImage(currentIndex);
+                        const imgElement = document.createElement('img');
+                        imgElement.src = url;
+                        imgElement.alt = 'イベント写真'; // アクセシビリティのため
+                        
+                        // 画像読み込みエラー時の処理
+                        imgElement.onerror = () => {
+                            console.error('Failed to load image:', url);
+                            // エラー時に代替テキストを表示するなど
+                            galleryItem.innerHTML = '<p style="color:#888;">画像読み込みエラー</p>';
+                        };
 
-                } else if (images.length === 0) {
-                    slideshowContainer.innerHTML = '写真がまだありません';
+                        galleryItem.appendChild(imgElement);
+                        galleryContainer.appendChild(galleryItem);
+                    });
+                } else {
+                    galleryContainer.innerHTML = '<p class="loading-message">写真がまだありません</p>';
                 }
 
             } catch (error) {
                 console.error('画像の取得に失敗しました:', error);
-                slideshowContainer.innerHTML = '画像の読み込みに失敗しました。';
+                galleryContainer.innerHTML = '<p class="error-message">画像の読み込みに失敗しました。</p>';
             }
-        }
-
-        function loadAndDisplayImage(index) {
-            if (images.length === 0) return;
-
-            // 既存の画像を全て非表示にする
-            Array.from(slideshowContainer.children).forEach(img => {
-                img.classList.remove('active');
-            });
-
-            // 画像が存在しない場合は新しく作成して追加
-            if (!slideshowContainer.children[index]) {
-                const imgElement = document.createElement('img');
-                imgElement.src = images[index];
-                imgElement.classList.add('slide-image');
-                slideshowContainer.appendChild(imgElement);
-            }
-
-            // 現在の画像をアクティブにする
-            slideshowContainer.children[index].classList.add('active');
-        }
-
-        function nextSlide() {
-            if (images.length === 0) return;
-
-            currentIndex = (currentIndex + 1) % images.length;
-            loadAndDisplayImage(currentIndex);
         }
 
         // 初回実行と定期実行
         fetchImages();
         setInterval(fetchImages, REFRESH_INTERVAL); // 定期的に新しい画像リストを取得
-        setInterval(nextSlide, SLIDE_DISPLAY_TIME); // スライドを切り替える
-
-        // 初回表示が遅れないように、画像取得後に最初のスライドを表示
-        // fetchImagesのPromiseが解決された後にnextSlideを呼ぶようにするとより確実
-        // ただし、シンプルな実装なのでsetIntervalで十分な場合が多い
+        
     </script>
 </body>
 </html>
