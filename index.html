@@ -57,7 +57,11 @@
         // ここにGASのウェブアプリURLを貼り付ける
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwJ1QQdKWiG8kZq0qiQB5bJwPMuJdnD3zhst2L4mNOy-brFntAQ1ezP5bANKPbl2FDv/exec'; 
         const galleryContainer = document.getElementById('gallery-container');
-        const REFRESH_INTERVAL = 15000; // 写真リストの再取得間隔（ミリ秒）- スライドショーより少し長めでも可
+        const REFRESH_INTERVAL = 15000; // 写真リストの再取得間隔（ミリ秒）
+        const SCROLL_SPEED = 50; // スクロール速度（ピクセル/フレーム）
+        const SCROLL_INTERVAL_MS = 100; // スクロールを実行する間隔（ミリ秒）
+
+        let scrollInterval; // スクロール処理のIDを保持
 
         async function fetchImages() {
             try {
@@ -77,32 +81,78 @@
 
                         const imgElement = document.createElement('img');
                         imgElement.src = url;
-                        imgElement.alt = 'イベント写真'; // アクセシビリティのため
+                        imgElement.alt = 'イベント写真'; 
                         
-                        // 画像読み込みエラー時の処理
                         imgElement.onerror = () => {
                             console.error('Failed to load image:', url);
-                            // エラー時に代替テキストを表示するなど
                             galleryItem.innerHTML = '<p style="color:#888;">画像読み込みエラー</p>';
                         };
 
                         galleryItem.appendChild(imgElement);
                         galleryContainer.appendChild(galleryItem);
                     });
+
+                    // 画像が更新されたら、スクロールをリセットして再開
+                    resetScroll();
+
                 } else {
                     galleryContainer.innerHTML = '<p class="loading-message">写真がまだありません</p>';
+                    stopScroll(); // 画像がない場合はスクロール停止
                 }
 
             } catch (error) {
                 console.error('画像の取得に失敗しました:', error);
                 galleryContainer.innerHTML = '<p class="error-message">画像の読み込みに失敗しました。</p>';
+                stopScroll(); // エラー時はスクロール停止
             }
+        }
+
+        // 自動スクロールを実行する関数
+        function autoScroll() {
+            // スクロール可能な最大量
+            const maxScroll = galleryContainer.scrollHeight - galleryContainer.clientHeight;
+
+            // 現在のスクロール位置
+            const currentScroll = galleryContainer.scrollTop;
+
+            if (currentScroll < maxScroll) {
+                // 下にスクロール
+                galleryContainer.scrollTop += SCROLL_SPEED;
+            } else {
+                // 最下部に到達したら、一番上に戻る
+                galleryContainer.scrollTop = 0;
+            }
+        }
+
+        // スクロールを開始する関数
+        function startScroll() {
+            if (scrollInterval) {
+                clearInterval(scrollInterval); // 既存のスクロールがあれば停止
+            }
+            scrollInterval = setInterval(autoScroll, SCROLL_INTERVAL_MS);
+        }
+
+        // スクロールを停止する関数
+        function stopScroll() {
+            if (scrollInterval) {
+                clearInterval(scrollInterval);
+                scrollInterval = null;
+            }
+        }
+
+        // スクロールをリセットして再開する関数
+        function resetScroll() {
+            galleryContainer.scrollTop = 0; // スクロール位置を一番上に戻す
+            startScroll(); // スクロールを再開
         }
 
         // 初回実行と定期実行
         fetchImages();
         setInterval(fetchImages, REFRESH_INTERVAL); // 定期的に新しい画像リストを取得
         
+        // 初回は画像取得後にスクロールを開始するため、fetchImages内でresetScrollを呼び出し
     </script>
+</body>
+</html>
 </body>
 </html>
